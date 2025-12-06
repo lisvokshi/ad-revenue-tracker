@@ -1,0 +1,91 @@
+AI Support Log – Ad Revenue Studio
+Student: Lis Vokshi
+Course: Mobile Applications – AAB College (Prishtina)
+
+This log explains where I used AI as support while I was developing the project.
+The AI was used mainly for guidance, code review and improvements. All final
+decisions, integrations with Supabase, testing, and debugging were done by me.
+
+-------------------------------------------------------------------------------
+[1] Date: 2025-12-02
+Topic: Project setup (Expo + GitHub)
+Why I used AI:
+I asked for help to remember the correct commands to create an Expo project,
+initialize Git, and push the first commit to GitHub.
+How I used the answers:
+I followed the commands step by step in my own terminal and verified that the
+project ran on my phone with Expo Go.
+
+[2] Date: 2025-12-02
+Topic: Supabase connection (supabaseClient.js)
+Why I used AI:
+I wanted a clean example of how to initialize the Supabase client in a React
+Native / Expo environment.
+How I used the answers:
+I created `app/supabaseClient.js` myself, copied the suggested structure, and
+then inserted my own Supabase URL and anon key. I tested the connection and
+fixed any issues directly in Supabase.
+
+[3] Date: 2025-12-02
+Topic: Auth screen (login / register)
+Why I used AI:
+I asked for help with a simple but good-looking login/register screen and the
+correct Supabase auth calls.
+How I used the answers:
+I adapted the provided code to my own design (texts, labels, animations) and
+connected it to my Supabase project. I tested registration, email confirmation
+and login flows myself.
+
+[4] Date: 2025-12-03
+Topic: AdSense revenue calculation logic
+Why I used AI:
+I wanted a structured way to calculate estimated AdSense and header bidding
+revenue (monthly, yearly and traffic growth scenarios).
+How I used the answers:
+The AI helped with the formulas and some example values. I implemented the
+logic in my own component, adjusted the tiers, categories and multipliers, and
+verified the results with my own test values.
+
+[5] Date: 2025-12-03
+Topic: Website profiles stored in Supabase
+Why I used AI:
+I asked for ideas on how to model website profiles (name, region tier, category,
+monthly pageviews) and connect them to Supabase.
+How I used the answers:
+I created the `sites` table in Supabase, added row level security policies, and
+then wired the insert and select calls in my code. I also designed the UI for
+the site list and selection myself.
+
+[6] Date: 2025-12-04
+Topic: UI/UX improvements
+Why I used AI:
+I wanted suggestions to make the app look more professional (cards, theming,
+animations, gauge, copy-to-clipboard).
+How I used the answers:
+I took the ideas and adapted them to my own style: dark/light theme, card
+layout, tier buttons, category chips and the RPM gauge. I adjusted colours,
+texts and layout manually until I was satisfied with the result.
+
+[7] Date: 2025-12-04
+Topic: Dependency issues and Expo compatibility
+Why I used AI:
+I had warnings about Expo package versions and missing dependencies.
+How I used the answers:
+AI reminded me of the correct `npx expo install` commands. I ran them in my own
+environment, checked the logs and confirmed the app was working again on my
+device.
+
+[8] Date: 2025-12-06
+Topic: Documentation (README and AI-log)
+Why I used AI:
+I asked for help structuring the README and this AI-log in a clear and formal
+way for my professor.
+How I used the answers:
+I selected the parts that fit my project, edited the text to match what I
+actually implemented, and removed anything that did not reflect my own work.
+
+-------------------------------------------------------------------------------
+Note:
+AI was used as a coding assistant (like documentation + example provider). The
+full project logic, Supabase configuration, testing on device and final design
+were implemented and decided by me, Lis Vokshi.
