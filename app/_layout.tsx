@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { createSupabaseClient } from '@/lib/supabaseClient';
 import AuthScreen from './screens/AuthScreen';
@@ -80,15 +81,18 @@ function TabNavigator() {
 
 export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       if (!supabase) {
         setIsAuthenticated(false);
+        setIsLoading(false);
         return;
       }
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
+      setIsLoading(false);
     };
     
     checkAuth();
@@ -104,9 +108,14 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!isAuthenticated) {
-    return <AuthScreen />;
+  // Show nothing while checking authentication
+  if (isLoading) {
+    return null;
   }
 
-  return <TabNavigator />;
+  return (
+    <NavigationContainer independent={true}>
+      {!isAuthenticated ? <AuthScreen /> : <TabNavigator />}
+    </NavigationContainer>
+  );
 }
