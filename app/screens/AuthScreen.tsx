@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import AdSenseRevenueCalculatorScreen from './AdSenseRevenueCalculatorScreen';
 
 type Mode = 'login' | 'register';
 
@@ -24,7 +23,6 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
   const [authScale] = useState(new Animated.Value(1));
 
   const handleForgotPassword = async () => {
@@ -106,7 +104,7 @@ export default function AuthScreen() {
 
       if (mode === 'login') {
         Alert.alert('Success', 'Logged in successfully.');
-        setLoggedIn(true);
+        // Navigation will be handled by _layout.tsx
       } else {
         Alert.alert(
           'Success',
@@ -135,10 +133,6 @@ export default function AuthScreen() {
       }),
     ]).start(handleAuth);
   };
-
-  if (loggedIn) {
-    return <AdSenseRevenueCalculatorScreen onLogout={() => setLoggedIn(false)} />;
-  }
 
   return (
     <View style={styles.authRoot}>
