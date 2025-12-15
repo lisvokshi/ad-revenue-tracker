@@ -125,6 +125,18 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
   const calculateScale = useRef(new Animated.Value(1)).current;
   const gaugeAnim = useRef(new Animated.Value(0)).current;
 
+  // Handle logout
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      Alert.alert('Logout error', error.message);
+      return;
+    }
+    if (onLogout) {
+      onLogout();
+    }
+  };
+
   // Load user from Supabase
   useEffect(() => {
     const loadUser = async () => {
@@ -392,7 +404,7 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
       )}
 
       <ExplanationCard />
-      <LogoutButton onLogout={onLogout ?? (() => {})} />
+      <LogoutButton onLogout={handleLogout} />
     </ScrollView>
   );
 }
