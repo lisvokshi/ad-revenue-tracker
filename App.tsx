@@ -1,42 +1,106 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { Session } from '@supabase/supabase-js';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
-import AdSenseRevenueCalculatorScreen from './app/screens/AdSenseRevenueCalculatorScreen';
-import AdsSetupScreen from './app/screens/AdsSetupScreen';
-import ProfileScreen from './app/screens/ProfileScreen';
+import AuthScreen from './app/screens/AuthScreen';
+import { supabase } from './app/supabaseClient';
+import MainTabs from './navigation/MainTabs';
 
-const Tab = createBottomTabNavigator();
+type RootStackParamList = {
+  Auth: undefined;
+  Main: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const navRef = useRef<any>(null);
+
+  useEffect(() => {
+    const loadSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (!error) {
+        setSession(data.session);
+      }
+      setCheckingSession(false);
+    };
+
+    loadSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+        setCheckingSession(false);
+      },
+    );
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || checkingSession) return;
+
+    if (session) {
+      nav.reset({
+        index: 0,
+        routes: [{ name: 'Main' as const }],
+      });
+    } else {
+      nav.reset({
+        index: 0,
+        routes: [{ name: 'Auth' as const }],
+      });
+    }
+  }, [session, checkingSession]);
+
+  if (checkingSession) {
+    return (
+      <NavigationContainer ref={navRef}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#020617',
+          }}
+        >
+          <ActivityIndicator color="#22C55E" />
+        </View>
+      </NavigationContainer>
+    );
+  }
+
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: { backgroundColor: '#020617' },
-          tabBarActiveTintColor: '#22C55E',
-          tabBarInactiveTintColor: '#9CA3AF',
-        }}
-      >
-        {/* First tab: Calculator */}
-        <Tab.Screen
-          name="Calculator"
-          component={AdSenseRevenueCalculatorScreen}
-        />
+    <NavigationContainer ref={navRef}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!session ? (
+          <Stack.Screen name="Auth">
+            {() => <AuthScreen onAuthSuccess={(newSession) => setSession(newSession)} />} 
+          </Stack.Screen>
+        ) : null}
 
-        {/* Second tab: Ads Setup */}
-        <Tab.Screen
-          name="Ads Setup"
-          component={AdsSetupScreen}
-        />
-
-        {/* Third tab: Profile */}
-        <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
-        />
-      </Tab.Navigator>
+        {session ? (
+          <Stack.Screen name="Main">
+            {() => (
+              <MainTabs
+                user={session.user}
+                onLogout={handleLogout}
+              />
+            )}
+          </Stack.Screen>
+        ) : null}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

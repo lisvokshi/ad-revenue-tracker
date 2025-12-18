@@ -18,7 +18,6 @@ import ActiveSiteCard from '../components/ActiveSiteCard';
 import CategorySelector from '../components/CategorySelector';
 import ExplanationCard from '../components/ExplanationCard';
 import HeroHeader from '../components/HeroHeader';
-import LogoutButton from '../components/LogoutButton';
 import NewSiteForm from '../components/NewSiteForm';
 import RegionTierSelector from '../components/RegionTierSelector';
 import RevenueStats from '../components/RevenueStats';
@@ -26,7 +25,7 @@ import SiteList from '../components/SiteList';
 import TrafficInput from '../components/TrafficInput';
 
 
-type RegionTier = 'Tier 1' | 'Tier 2' | 'Tier 3';
+export type RegionTier = 'Tier 1' | 'Tier 2' | 'Tier 3';
 type CalculatorProps = { onLogout?: () => void };
 type Site = {
   id: string;
@@ -36,9 +35,9 @@ type Site = {
   monthly_pageviews: number;
 };
 
-const REGION_TIERS: RegionTier[] = ['Tier 1', 'Tier 2', 'Tier 3'];
+export const REGION_TIERS: RegionTier[] = ['Tier 1', 'Tier 2', 'Tier 3'];
 
-const CATEGORIES: string[] = [
+export const CATEGORIES: string[] = [
   'Arts & Entertainment',
   'Autos & Vehicles',
   'Beauty & Fitness',
@@ -66,13 +65,13 @@ const CATEGORIES: string[] = [
   'Travel',
 ];
 
-const BASE_CPM_BY_TIER: Record<RegionTier, number> = {
+export const BASE_CPM_BY_TIER: Record<RegionTier, number> = {
   'Tier 1': 2.0,
   'Tier 2': 1.2,
   'Tier 3': 0.5,
 };
 
-const CATEGORY_MULTIPLIERS: Record<string, number> = {
+export const CATEGORY_MULTIPLIERS: Record<string, number> = {
   'Arts & Entertainment': 1.0,
   'Autos & Vehicles': 1.1,
   'Beauty & Fitness': 1.0,
@@ -100,7 +99,7 @@ const CATEGORY_MULTIPLIERS: Record<string, number> = {
   Travel: 1.1,
 };
 
-const HEADER_BIDDING_MULTIPLIER = 1.5;
+export const HEADER_BIDDING_MULTIPLIER = 1.5;
 
 export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorProps) {
   const [userId, setUserId] = useState<string | null>(null);
@@ -110,8 +109,6 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
 
   const [newSiteName, setNewSiteName] = useState('');
-  const [newSitePageviews, setNewSitePageviews] = useState('');
-
   const [regionTier, setRegionTier] = useState<RegionTier>('Tier 1');
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [monthlyPageviews, setMonthlyPageviews] = useState('');
@@ -173,12 +170,12 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
       Alert.alert('Auth error', 'User not found. Please log in again.');
       return;
     }
-    if (!newSiteName || !newSitePageviews) {
-      Alert.alert('Missing fields', 'Please enter site name and pageviews.');
+    if (!newSiteName || !monthlyPageviews) {
+      Alert.alert('Missing fields', 'Please enter site name and monthly pageviews.');
       return;
     }
 
-    const pv = Number(newSitePageviews);
+    const pv = Number(monthlyPageviews);
     if (Number.isNaN(pv) || pv <= 0) {
       Alert.alert('Invalid pageviews', 'Please enter a positive number.');
       return;
@@ -207,8 +204,8 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
       setSites((prev) => [...prev, newSite]);
       setSelectedSiteId(newSite.id);
       setNewSiteName('');
-      setNewSitePageviews('');
-      Alert.alert('Success', 'Website profile saved.');
+      setMonthlyPageviews(String(pv));
+      Alert.alert('Success', 'Website profile saved. Calculation updated.');
     } finally {
       setCreatingSite(false);
     }
@@ -223,21 +220,23 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
   // Selected site
   const selectedSite = selectedSiteId ? sites.find((s) => s.id === selectedSiteId) : null;
 
-  // When selected site changes, sync inputs and calculate
+  // Sync inputs when switching sites
   useEffect(() => {
     if (!selectedSite) return;
-
-    // Sync UI inputs to the site's metadata
     setRegionTier(selectedSite.region_tier);
     setCategory(selectedSite.category);
     setMonthlyPageviews(String(selectedSite.monthly_pageviews));
+  }, [selectedSite]);
 
-    // Calculate based on the selected site's values using your existing math
-    const pv = selectedSite.monthly_pageviews;
+  // Auto-calc when a site is selected and inputs change
+  useEffect(() => {
+    if (!selectedSite) return;
+    const pv = Number(monthlyPageviews);
+    if (Number.isNaN(pv) || pv <= 0) return;
+
     const monthly = (pv / 1000) * effectiveCpm;
     const annual = monthly * 12;
     const header = annual * HEADER_BIDDING_MULTIPLIER;
-
     const annual20 = ((pv * 1.2) / 1000) * effectiveCpm * 12;
     const annual50 = ((pv * 1.5) / 1000) * effectiveCpm * 12;
 
@@ -246,7 +245,7 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
     setHeaderAnnual(header);
     setAdsenseAnnual20(annual20);
     setAdsenseAnnual50(annual50);
-  }, [selectedSite, effectiveCpm]);
+  }, [selectedSite, monthlyPageviews, effectiveCpm]);
 
   // Gauge animation on calculate
   useEffect(() => {
@@ -330,32 +329,23 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
         <ActiveSiteCard site={selectedSite} selected />
       ) : (
         <Text style={styles.headerHint}>
-          Create a website profile or type values manually below.
+          Pick a saved site or create one below to calculate revenue.
         </Text>
-      )}
-
-      {adsenseMonthly !== null && adsenseAnnual !== null && headerAnnual !== null && (
-        <RevenueStats
-          adsenseMonthly={adsenseMonthly}
-          adsenseAnnual={adsenseAnnual}
-          headerAnnual={headerAnnual}
-        />
       )}
 
       <SiteList
         sites={sites}
         sitesLoading={sitesLoading}
         selectedSiteId={selectedSiteId}
-        onSelectSite={setSelectedSiteId}
-      />
-
-      <NewSiteForm
-        newSiteName={newSiteName}
-        newSitePageviews={newSitePageviews}
-        creatingSite={creatingSite}
-        onChangeName={setNewSiteName}
-        onChangePageviews={setNewSitePageviews}
-        onCreateSite={handleCreateSite}
+        onSelectSite={(id) => {
+          setSelectedSiteId(id);
+          const found = sites.find((s) => s.id === id);
+          if (found) {
+            setRegionTier(found.region_tier);
+            setCategory(found.category);
+            setMonthlyPageviews(String(found.monthly_pageviews));
+          }
+        }}
       />
 
       <RegionTierSelector
@@ -370,6 +360,15 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
         categories={CATEGORIES}
       />
 
+      <NewSiteForm
+        newSiteName={newSiteName}
+        monthlyPageviews={monthlyPageviews}
+        creatingSite={creatingSite}
+        onChangeName={setNewSiteName}
+        onChangePageviews={setMonthlyPageviews}
+        onCreateSite={handleCreateSite}
+      />
+
       <TrafficInput
         monthlyPageviews={monthlyPageviews}
         onChangePageviews={setMonthlyPageviews}
@@ -378,7 +377,15 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
         calculateScale={calculateScale}
       />
 
-      {adsenseMonthly !== null && adsenseAnnual !== null && headerAnnual !== null && (
+      {selectedSite && adsenseMonthly !== null && adsenseAnnual !== null && headerAnnual !== null && (
+        <RevenueStats
+          adsenseMonthly={adsenseMonthly}
+          adsenseAnnual={adsenseAnnual}
+          headerAnnual={headerAnnual}
+        />
+      )}
+
+      {selectedSite && adsenseMonthly !== null && adsenseAnnual !== null && headerAnnual !== null && (
         <EstimatedRevenue
           effectiveCpm={effectiveCpm}
           gaugeAnim={gaugeAnim}
@@ -392,7 +399,6 @@ export default function AdSenseRevenueCalculatorScreen({ onLogout }: CalculatorP
       )}
 
       <ExplanationCard />
-      <LogoutButton onLogout={onLogout ?? (() => {})} />
     </ScrollView>
   );
 }

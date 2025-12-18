@@ -1,5 +1,5 @@
 // screens/AuthScreen.tsx
-import { createSupabaseClient } from '@/lib/supabaseClient';
+import type { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import React, { useState } from 'react';
 import {
@@ -12,19 +12,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import AdSenseRevenueCalculatorScreen from './AdSenseRevenueCalculatorScreen';
+
+import { supabase } from '../supabaseClient';
 
 type Mode = 'login' | 'register';
 
-const supabase = createSupabaseClient();
+type Props = {
+  onAuthSuccess?: (session: Session) => void;
+};
 
-export default function AuthScreen() {
+export default function AuthScreen({ onAuthSuccess }: Props) {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
   const [authScale] = useState(new Animated.Value(1));
 
   const handleForgotPassword = async () => {
@@ -35,14 +37,6 @@ export default function AuthScreen() {
 
     try {
       setResetLoading(true);
-
-      if (!supabase) {
-        Alert.alert(
-          'Supabase not configured',
-          'Set Supabase credentials to use password reset.',
-        );
-        return;
-      }
 
       const redirectTo = Linking.createURL('reset-password');
 
@@ -77,26 +71,10 @@ export default function AuthScreen() {
     try {
       setLoading(true);
 
-      if (!supabase) {
-        Alert.alert(
-          'Supabase not configured',
-          'Set Supabase credentials to use authentication.',
-        );
-        return;
-      }
-
-      let result;
-      if (mode === 'login') {
-        result = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-      } else {
-        result = await supabase.auth.signUp({
-          email,
-          password,
-        });
-      }
+      const result =
+        mode === 'login'
+          ? await supabase.auth.signInWithPassword({ email, password })
+          : await supabase.auth.signUp({ email, password });
 
       if (result.error) {
         console.error(result.error);
@@ -105,9 +83,26 @@ export default function AuthScreen() {
       }
 
       if (mode === 'login') {
-        Alert.alert('Success', 'Logged in successfully.');
-        setLoggedIn(true);
+        const session = result.data.session;
+        if (session) {
+          onAuthSuccess?.(session);
+          Alert.alert('Success', 'Logged in successfully.');
+        } else {
+          const { data: refreshed } = await supabase.auth.getSession();
+          if (refreshed.session) {
+            onAuthSuccess?.(refreshed.session);
+            Alert.alert('Success', 'Logged in successfully.');
+          } else {
+            Alert.alert(
+              'Check email verification',
+              'Login succeeded but no session is active. Please verify your email or try again.',
+            );
+          }
+        }
       } else {
+        if (result.data.session) {
+          onAuthSuccess?.(result.data.session);
+        }
         Alert.alert(
           'Success',
           'Registered successfully. Please check your email if confirmation is required.',
@@ -135,10 +130,6 @@ export default function AuthScreen() {
       }),
     ]).start(handleAuth);
   };
-
-  if (loggedIn) {
-    return <AdSenseRevenueCalculatorScreen onLogout={() => setLoggedIn(false)} />;
-  }
 
   return (
     <View style={styles.authRoot}>

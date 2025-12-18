@@ -11,7 +11,7 @@ import { globalStyles } from '../styles/styles';
 
 type Props = {
   newSiteName: string;
-  newSitePageviews: string;
+  monthlyPageviews: string;
   creatingSite: boolean;
   onChangeName: (text: string) => void;
   onChangePageviews: (text: string) => void;
@@ -20,7 +20,7 @@ type Props = {
 
 export default function NewSiteForm({
   newSiteName,
-  newSitePageviews,
+  monthlyPageviews,
   creatingSite,
   onChangeName,
   onChangePageviews,
@@ -45,7 +45,7 @@ export default function NewSiteForm({
         placeholder="e.g. 1 200 000"
         placeholderTextColor="#64748b"
         keyboardType="numeric"
-        value={newSitePageviews}
+        value={monthlyPageviews}
         onChangeText={onChangePageviews}
       />
 
